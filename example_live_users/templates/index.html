@@ -12,21 +12,41 @@
 <div>    
     <h1>Welcome to Website</h1>
     <h5>Live users: <span id="counter">{{data['counter']}}</span></h5>
+    <small id="status""></small>
 </div>
 
 <script>
     var socket = io();
-    socket.on('connect', function(json){
-        console.log('connected');
+    var lastCount = {{data['counter']}};
+
+    socket.on('connect', function(){
+        console.log('Connected');
     });
 
-    socket.on('disconnect', function(json){
-        console.log('disconnected');
+    socket.on('disconnect', function(){
+        console.log('Disconnected');
     });
 
     socket.on('user', function(json){
         console.log(json);
-        $('#counter').text(json.counter);
+        var newCount = json.counter;
+        $('#counter').text(newCount);
+        
+        if (newCount > lastCount) {
+            $('#status').text('Someone has connected').css('color', 'green').show();
+            setTimeout(function() {
+                $('#status').fadeOut();
+            }, 2000);
+        } else if (newCount < lastCount) {
+            $('#status').text('Someone has disconnected').css('color', 'red').show();
+            setTimeout(function() {
+                $('#status').fadeOut();
+            }, 2000);
+        }
+        
+        // Update lastCount to keep track of the most recent user count
+        // This allows us to compare with future updates and determine if users connected or disconnected
+        lastCount = newCount;
     });
 </script>
 

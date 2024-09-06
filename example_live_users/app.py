@@ -4,49 +4,39 @@ import os
 import json
 import sys
 
-
-
 app = Flask(__name__)
 socketio = SocketIO(app)
 
 @socketio.on('connect')
 def ws_connect():
-    try:
-        f = open("test.txt", "r")
-        data = f.read()
-        tem = {'counter': int(json.loads(data).get("counter")) + 1}
-        f.close()
-        emit('user', tem, broadcast=True)
+    with open("log.json", "r") as file:
+        data = json.load(file)
+    updated_counter = {'counter': data['counter'] + 1}
+    emit('user', updated_counter, broadcast=True)
 
-        fw = open("test.txt", "w")
-        fw.write(json.dumps(tem))
-        fw.close()
-        emit('connect', tem, broadcast=True)
-
-    except Exception as e:
-        fw = open("test.txt", "w")
-        fw.write(json.dumps({"counter": 0}))
-        fw.close()
-        emit('user', {'counter': 0}, broadcast=True)
+    with open("log.json", "w") as file:
+        json.dump(updated_counter, file)
+    emit('connect', updated_counter, broadcast=True)
 
 @socketio.on('disconnect')
 def ws_disconnect():
-    f = open("test.txt", "r")
-    data = f.read()
-    tem = {'counter': int(json.loads(data).get("counter")) - 1}
-    f.close()
-    fw = open("test.txt", "w")
-    fw.write(json.dumps(tem))
-    fw.close()
-    emit('user', tem, broadcast=True)
+    with open("log.json", "r") as file:
+        data = json.load(file)
+    updated_counter = {'counter': data['counter'] - 1}
+    with open("log.json", "w") as file:
+        json.dump(updated_counter, file)
+    emit('user', updated_counter, broadcast=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    f = open("test.txt", "r")
-    data = f.read()
-    data = {'counter': int(json.loads(data).get("counter"))}
+    with open("log.json", "r") as file:
+        data = json.load(file)
     return render_template("index.html", data=data)
 
 
 if __name__ == '__main__':
+    # Initialize counter to 0 when app is launched
+    with open("log.json", "w") as file:
+        json.dump({"counter": 0}, file)
+    
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

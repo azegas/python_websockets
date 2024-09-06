@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <h1>Sensor Data</h1>
+    <p>Temperature: <span id="temperature"></span>°C</p>
+    <p>Humidity: <span id="humidity"></span>%</p>
+
+    <script>
+        const socket = io();
+        
+        function updateSensorData(data) {
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('humidity').textContent = data.humidity;
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('sensor_update', (data) => {
+            updateSensorData(data);
+        });
+
+        // Request updates every 5 seconds
+        setInterval(() => {
+            socket.emit('request_update');
+        }, 1000);
+
+        // Initial data update
+        updateSensorData({{ initial_data|tojson }});
+    </script>
+</body>
+</html>
